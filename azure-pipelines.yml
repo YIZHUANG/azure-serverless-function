@@ -1,0 +1,56 @@
+
+stages:
+  - stage: BuildAndDeploy
+    dependsOn: []
+    jobs:
+      - job: BuildJob
+        pool:
+          vmImage: ubuntu-16.04
+        steps:
+          - script: |
+              npm install
+              npm run build --if-present
+              npm prune --production
+            displayName: "building app"
+          - task: ArchiveFiles@2
+            displayName: "Archive files"
+            inputs:
+              rootFolderOrFile: "$(System.DefaultWorkingDirectory)"
+              includeRootFolder: false
+              archiveFile: "$(System.DefaultWorkingDirectory)/$(Build.BuildId).zip"
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "$(System.DefaultWorkingDirectory)/$(Build.BuildId).zip"
+              name: "drop"
+      - job: DeployDev
+        pool:
+          vmImage: ubuntu-16.04
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: drop
+              downloadPath: "$(System.DefaultWorkingDirectory)"
+          - task: AzureFunctionApp@1
+            inputs:
+              azureSubscription: $(AZURE_SUBSCRIPTION)
+              appType: functionAppLinux
+              appName: $(AZURE_FUNCTION_DEV_NAME)
+              package: $(System.DefaultWorkingDirectory)/**/*.zip
+        dependsOn: BuildJob
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+      - job: DeployProd
+        pool:
+          vmImage: ubuntu-16.04
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              artifactName: drop
+              downloadPath: "$(System.DefaultWorkingDirectory)"
+          - task: AzureFunctionApp@1
+            inputs:
+              azureSubscription: $(AZURE_SUBSCRIPTION)
+              appType: functionAppLinux
+              appName: $(AZURE_FUNCTION_DEV_NAME)
+              package: $(System.DefaultWorkingDirectory)/**/*.zip
+        dependsOn: BuildJob
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
