@@ -16,6 +16,15 @@
 npm install
 ```
 
+## Explanation
+
+It will build the project and deploy to the staging "dev" environment upon each push/merge to the branch "develop".
+
+Upon each push/merge to the master branch, will deploy the app to production.
+
+Configs can be found at azure-pipelines.yml
+
+
 ## Usage
 
 ```sh
