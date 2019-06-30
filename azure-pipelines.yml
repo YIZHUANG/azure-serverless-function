@@ -1,6 +1,6 @@
 
 stages:
-  - stage: BuildAndDeploy
+  - stage: Build
     dependsOn: []
     jobs:
       - job: BuildJob
@@ -22,6 +22,11 @@ stages:
             inputs:
               PathtoPublish: "$(System.DefaultWorkingDirectory)/$(Build.BuildId).zip"
               name: "drop"
+
+  - stage: DeployDev
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    jobs:
       - job: DeployDev
         pool:
           vmImage: ubuntu-16.04
@@ -36,8 +41,11 @@ stages:
               appType: functionAppLinux
               appName: $(AZURE_FUNCTION_DEV_NAME)
               package: $(System.DefaultWorkingDirectory)/**/*.zip
-        dependsOn: BuildJob
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+
+  - stage: DeployProd
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
       - job: DeployProd
         pool:
           vmImage: ubuntu-16.04
@@ -52,5 +60,3 @@ stages:
               appType: functionAppLinux
               appName: $(AZURE_FUNCTION_DEV_NAME)
               package: $(System.DefaultWorkingDirectory)/**/*.zip
-        dependsOn: BuildJob
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
