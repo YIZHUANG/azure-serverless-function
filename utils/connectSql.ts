@@ -1,5 +1,5 @@
 // @ts-ignore
-const sql = require("mssql");
+const sql = require("mssql"); // there's a bug in this lib, thats why.
 
 async function connectToSQL() {
   const config = {
