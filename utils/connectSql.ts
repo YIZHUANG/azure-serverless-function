@@ -1,5 +1,4 @@
-// @ts-ignore
-const sql = require("mssql"); // there's a bug in this lib, thats why.
+import * as sql from 'mssql';
 
 async function connectToSQL() {
   const config = {
@@ -11,6 +10,7 @@ async function connectToSQL() {
       encrypt: true,
     },
   };
+  // @ts-ignore
   return await sql.connect(config);
 }
 
